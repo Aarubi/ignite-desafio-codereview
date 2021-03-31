@@ -1,5 +1,4 @@
 const express = require("express");
-
 const { v4: uuid } = require("uuid");
 
 const app = express();
@@ -8,14 +7,14 @@ app.use(express.json());
 
 const repositories = [];
 
-app.get("/repositories", (request, response) => {
+app.get("/repositories", (_request, response) => {
   return response.json(repositories);
 });
 
 app.post("/repositories", (request, response) => {
   const { title, url, techs } = request.body
 
-  const repository = {
+  const newRepository = {
     id: uuid(),
     title,
     url,
@@ -23,20 +22,27 @@ app.post("/repositories", (request, response) => {
     likes: 0
   };
 
-  return response.json(repository);
+  repositories.push(newRepository)
+
+  return response.status(201).json(newRepository);
 });
 
 app.put("/repositories/:id", (request, response) => {
   const { id } = request.params;
+  //Neste caso desestruturação não foi uma boa ideia (não deu pra manter os valores que não precisavam de update)
+  //const  { title, url, techs} = request.body;
   const updatedRepository = request.body;
 
-  repositoryIndex = repositories.findindex(repository => repository.id === id);
+  repositoryIndex = repositories.findIndex(repository => repository.id === id);
 
   if (repositoryIndex < 0) {
     return response.status(404).json({ error: "Repository not found" });
   }
-
-  const repository = { ...repositories[repositoryIndex], ...updatedRepository };
+  const repository = { 
+    ...repositories[repositoryIndex], 
+    ...updatedRepository, 
+    likes: repositories[repositoryIndex].likes 
+  };
 
   repositories[repositoryIndex] = repository;
 
@@ -48,7 +54,7 @@ app.delete("/repositories/:id", (request, response) => {
 
   repositoryIndex = repositories.findIndex(repository => repository.id === id);
 
-  if (repositoryIndex > 0) {
+  if (repositoryIndex < 0) {
     return response.status(404).json({ error: "Repository not found" });
   }
 
@@ -66,9 +72,9 @@ app.post("/repositories/:id/like", (request, response) => {
     return response.status(404).json({ error: "Repository not found" });
   }
 
-  const likes = ++repositories[repositoryIndex].likes;
+  repositories[repositoryIndex].likes +=1;
 
-  return response.json('likes');
+  return response.json(repositories[repositoryIndex]);
 });
 
 module.exports = app;
